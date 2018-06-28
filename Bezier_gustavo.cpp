@@ -9,13 +9,6 @@
 #define NPOINTS 20 //numero de pontos adicionados pelo usuario
 #define DIVBEZIER 20  //numero de pontos na curva de bezier
 
-const float t = 1 / (float)DIVBEZIER;
-GLfloat points_x[NPOINTS], points_y[NPOINTS];
-GLfloat curva_x[200], curva_y[200];
-GLint point_idx = -1;
-GLint bezier_idx = -1;
-
-
 #define ALTURA_BLOCO 0.15
 #define LARGURA_BLOCO 0.15
 int quantidade_de_blocos;
@@ -27,6 +20,16 @@ float obistaculos[200][4];
 #define LARGURA 3
 
 #define FAZE 1
+
+
+const float t = 1 / (float) DIVBEZIER;
+GLfloat points_x[NPOINTS]; //Vetor de coordenadas x dos pontos
+GLfloat points_y[NPOINTS]; //Vetor de coordenadas  dos pontos
+GLfloat curva_x[NPOINTS - 2][DIVBEZIER]; //Vetor de coordenadas x da curva
+GLfloat curva_y[NPOINTS - 2][DIVBEZIER]; //Vetor de coordenadas y da curva
+GLint point_idx = -1; //Contador de pontos
+GLint bezier_idx = -1; //Contador de curvas
+
 
 
 void imprime_bloco(float x, float y, float altura, float largura )
@@ -108,10 +111,10 @@ void mapa(void)
 }
 
 
-void init_game()
+void init_game(int faze)
 {
 	
-	switch (FAZE)
+	switch (faze)
 	{
 		case 0:
 			gera_blocos_aleatorios();
@@ -130,43 +133,125 @@ void init_game()
 
 //YASMIM
 
-void bezierCub(int p1, int p2, int p3, int p4) {
+//Remove curvas de Bezier
+void removeBezier() {
 	for (int i = 0; i <= DIVBEZIER; i++) {
-		bezier_idx++;
-
-		curva_x[bezier_idx] = (pow(1 - t * i, 3) * points_x[p1]) + (3 * t*i * pow(1 - t * i, 2) * points_x[p2]) +
-			(3 * pow(t*i, 2) * (1 - t * i) * points_x[p3]) + (pow(t*i, 3) * points_x[p4]);
-		curva_y[bezier_idx] = (pow(1 - t * i, 3) * points_y[p1]) + (3 * t*i * pow(1 - t * i, 2) * points_y[p2]) +
-			(3 * pow(t*i, 2) * (1 - t * i) * points_y[p3]) + (pow(t*i, 3) * points_y[p4]);
+		curva_x[bezier_idx][i] = 0.0;
+		curva_y[bezier_idx][i] = 0.0;
 	}
 }
 
-void bezierQuad(int p1, int p2, int p3) {
-	for (int i = 0; i <= DIVBEZIER; i++) {
-		bezier_idx++;
 
-		curva_x[bezier_idx] = (pow(1 - t * i, 2) * points_x[p1]) +
-			(2 * t*i * (1 - t * i) * points_x[p2]) + (pow(t*i, 2) * points_x[p3]);
-		curva_y[bezier_idx] = (pow(1 - t * i, 2) * points_y[p1]) +
-			(2 * t*i * (1 - t * i) * points_y[p2]) + (pow(t*i, 2) * points_y[p3]);
+
+
+//Aplica Bezier Cubico
+void bezierQuad(GLfloat p1_x, GLfloat p2_x, GLfloat p3_x, GLfloat p1_y, GLfloat p2_y, GLfloat p3_y) {
+	for (int i = 0; i <= DIVBEZIER; i++) {
+		curva_x[bezier_idx][i] = (pow(1 - t*i, 2) * p1_x) +
+			(2 * t*i * (1 - t*i) * p2_x) + (pow(t*i, 2) * p3_x);
+		curva_y[bezier_idx][i] = (pow(1 - t * i, 2) * p1_y) +
+			(2 * t*i * (1 - t*i) * p2_y) + (pow(t*i, 2) * p3_y);
 	}
 }
+
 
 void mouse(int button, int state, int x, int y) {
-	if (point_idx < NPOINTS - 1) {
+	//Adiciona pontos e curvas
+	//Jogador cria pontos clicando no botao esquerdo do mouse
+	if (point_idx < NPOINTS - 2) {
+		//Criacao de pontos e curvas
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+			//Adiciona um ponto a lista
 			point_idx++;
 
+			//Pega coordenadas do ponto passado
 			points_x[point_idx] = (2.0*x) / WINDOW_WIDTH - 1.0;
 			points_y[point_idx] = 1.0 - (2.0*y) / WINDOW_HEIGHT;
 
-			//Aplica Bezier Quadratico
-			//if (point_idx % 2 == 0 && point_idx != 0) 
-			//	bezierQuad(point_idx - 2, point_idx - 1, point_idx);
+			//Existem mais de 4 pontos em tela
+			//Adiciona nova curva
+			if (point_idx > 3) {
+				bezierQuad((points_x[point_idx - 3] + points_x[point_idx - 2]) / 2, 
+					points_x[point_idx - 2], (points_x[point_idx - 2] + points_x[point_idx - 1]) / 2,
+					(points_y[point_idx - 3] + points_y[point_idx - 2]) / 2, points_y[point_idx - 2],
+					(points_y[point_idx - 2] + points_y[point_idx - 1]) / 2);
 
-			//Aplica Bezier Cubico
-			if (point_idx % 3 == 0 && point_idx != 0)
-				bezierCub(point_idx - 3, point_idx - 2, point_idx - 1, point_idx);
+				bezier_idx++;
+				bezierQuad((points_x[point_idx - 2] + points_x[point_idx - 1]) / 2,
+					points_x[point_idx - 1], points_x[point_idx],
+					(points_y[point_idx - 2] + points_y[point_idx - 1]) / 2,
+					points_y[point_idx - 1], points_y[point_idx]);
+			}
+			//Existem 4 pontos em tela
+			//Adiciona segunda curva
+			else if (point_idx == 3) {
+				bezierQuad(points_x[point_idx - 3], points_x[point_idx - 2],
+					(points_x[point_idx - 2] + points_x[point_idx - 1]) / 2,
+					points_y[point_idx - 3], points_y[point_idx - 2],
+					(points_y[point_idx - 2] + points_y[point_idx - 1]) / 2);
+
+				bezier_idx++;
+				bezierQuad((points_x[point_idx - 2] + points_x[point_idx - 1]) / 2,
+					points_x[point_idx - 1], points_x[point_idx], 
+					(points_y[point_idx - 2] + points_y[point_idx - 1]) / 2,
+					points_y[point_idx - 1], points_y[point_idx]);
+			}
+			//Existem 3 pontos em tela
+			//Cria primeira curva
+			else if (point_idx == 2) {
+				bezier_idx++;
+				bezierQuad(points_x[point_idx - 2], points_x[point_idx - 1], points_x[point_idx],
+					points_y[point_idx - 2], points_y[point_idx - 1], points_y[point_idx]);
+			}
+		}
+	}
+
+	//Remocao de pontos e curvas
+	//Jogador remove pontos clicanco no botao direito do mouse
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+		//Existem mais de duas curvas
+		//Remove ultima curva e ultimo ponto
+		if (point_idx > 3) {
+			removeBezier();
+			bezier_idx--;
+
+			points_x[point_idx] = 0.0;
+			points_y[point_idx] = 0.0;
+			point_idx--;
+
+			bezierQuad((points_x[point_idx - 2] + points_x[point_idx - 1]) / 2, points_x[point_idx - 1], 
+				points_x[point_idx], (points_y[point_idx - 2] + points_y[point_idx - 1]) / 2,
+				points_y[point_idx - 1], points_y[point_idx]);
+		}
+		//Existem duas curvas
+		//Remove ultima curva e ultimo ponto
+		else if (point_idx == 3) {
+			removeBezier();
+			bezier_idx--;
+
+			points_x[point_idx] = 0.0;
+			points_y[point_idx] = 0.0;
+			point_idx--;
+
+			bezierQuad(points_x[point_idx - 2], points_x[point_idx - 1], points_x[point_idx],
+				points_y[point_idx - 2], points_y[point_idx - 1], points_y[point_idx]);
+		}
+		//Existe apenas uma curva
+		//Remove curva e ultimo ponto
+		else if (point_idx == 2) { 
+			removeBezier();
+			bezier_idx--;
+
+			points_x[point_idx] = 0.0;
+			points_y[point_idx] = 0.0;
+			point_idx--;
+		}
+		//Nao existem curvas
+		//Remove o ultimo ponto
+		else if (point_idx > -1) { 
+			points_x[point_idx] = 0.0;
+			points_y[point_idx] = 0.0;
+			point_idx--;
 		}
 	}
 
@@ -178,7 +263,7 @@ void display(void) {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	mapa();	//adi��o: JO�O
+	mapa();
 
 	//Define cor atual
 	glColor3f(1.0, 1.0, 1.0);
@@ -193,9 +278,9 @@ void display(void) {
 
 	//Desenha retas (Curva de Bezier)
 	glBegin(GL_LINE_STRIP);
-	for (int i = 0; i <= bezier_idx; i++) {
-		glVertex2d(curva_x[i], curva_y[i]);
-	}
+	for (int i = 0; i <= bezier_idx; i++) 
+		for(int j = 0; j <= DIVBEZIER; j++)
+			glVertex2d(curva_x[i][j], curva_y[i][j]);
 	glEnd();
 
 	//Exibe o conteudo do Frame Buffer
@@ -208,7 +293,7 @@ int main(int argc, char** argv) {
 
 	glutInit(&argc, argv);
 
-	init_game();
+	init_game(FAZE);
 
 	//Modo do Display
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
