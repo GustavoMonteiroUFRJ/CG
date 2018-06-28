@@ -25,22 +25,15 @@ float obstaculoX[200];
 float obstaculoY[200];
 int numeroObstaculos;
 
-//Desenha os pontos iniciais e finais (a principio, fiz eles fixos)
-void pontos(void)
+
+void imprime_bloco(float x, float y, float altura, float largura )
 {
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glBegin(GL_QUADS);	//quadrado de cima esquerda
-	glVertex2d(-1, 0.8);
-	glVertex2d(-0.8, 0.8);
-	glVertex2d(-0.8, 1);
-	glVertex2d(-1, 1);
-	glEnd();
-	glBegin(GL_QUADS);	//quadrado de baixo direita
-	glVertex2d(1, -0.8);
-	glVertex2d(0.8, -0.8);
-	glVertex2d(0.8, -1);
-	glVertex2d(1, -1);
-	glEnd();
+		glBegin(GL_QUADS);
+		glVertex2d(x, y);
+		glVertex2d(x + largura, y);
+		glVertex2d(x + largura, y + altura);
+		glVertex2d(x, y + altura);
+		glEnd();
 }
 
 //Desenha os obstaculos no mapa e a area final
@@ -50,12 +43,19 @@ void mapa(void)
 	int aux1, aux2;
 	float cxj, cyj;
 
-	pontos();	//desenha ponto inicial e final
+	// ponto inicial
+	glColor3f(0.0f, 0.0f, 1.0f);
+	imprime_bloco(0.8, -1.0, 0.2, 0.2);
+
+	// ponto final
+	glColor3f(0.0f, 1.0f, 0.0f);
+	imprime_bloco(-1.0,0.8,0.2,0.2);
 
 
 	if (obstaculoX[0] == 2) {
 		float coord_inicialx[(NUMOBSTACULOS + 5)];
 		float coord_inicialy[(NUMOBSTACULOS + 5)];
+
 		coord_inicialx[0] = -1;
 		coord_inicialy[0] = 1;
 		coord_inicialx[1] = 1;
@@ -91,23 +91,12 @@ void mapa(void)
 		obstaculoX[0] = 1;
 	}
 
-	i = 2;
-	glColor3f(0.0, 1.0, 0.0);
-	while (i < numeroObstaculos)
+	glColor3f(1.0, 0.0, 0.0);
+	for (i=2 ; i < numeroObstaculos; i++)
 	{
-		cxj = obstaculoX[i] + TAMOBSTACULO / 100.0;
-		cyj = obstaculoY[i] + TAMOBSTACULO / 100.0;
-		//desenha quadrados
-		glBegin(GL_QUADS);
-		glVertex2d(obstaculoX[i], obstaculoY[i]);
-		glVertex2d(obstaculoX[i], cyj);
-		glVertex2d(cxj, cyj);
-		glVertex2d(cxj, obstaculoY[i]);
-		glEnd();
-		i++;
+		imprime_bloco(obstaculoX[i], obstaculoY[i], TAMOBSTACULO / 100.0, TAMOBSTACULO / 100.0);
 	}
 }
-
 
 //YASMIM
 
