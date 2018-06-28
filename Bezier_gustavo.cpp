@@ -4,14 +4,10 @@
 #include <math.h>
 #include <GL/glut.h>
 
-#define WINDOW_WIDTH 800
+#define WINDOW_WIDTH 600
 #define WINDOW_HEIGHT 600
 #define NPOINTS 20 //numero de pontos adicionados pelo usuario
 #define DIVBEZIER 20  //numero de pontos na curva de bezier
-
-#define NUMOBSTACULOS 15	//numero maximo de obstaculos no mapa
-#define MINOBSTACULOS 10	//numero minimo de obstaculos no mapa
-#define TAMOBSTACULO 15	//tamanho do obstaculo
 
 const float t = 1 / (float)DIVBEZIER;
 GLfloat points_x[NPOINTS], points_y[NPOINTS];
@@ -19,11 +15,18 @@ GLfloat curva_x[200], curva_y[200];
 GLint point_idx = -1;
 GLint bezier_idx = -1;
 
-//JO�O
 
-float obstaculoX[200];
-float obstaculoY[200];
-int numeroObstaculos;
+#define ALTURA_BLOCO 0.15
+#define LARGURA_BLOCO 0.15
+int quantidade_de_blocos;
+
+float obistaculos[200][4];
+#define X 0
+#define Y 1
+#define ALTURA 2
+#define LARGURA 3
+
+#define FAZE 1
 
 
 void imprime_bloco(float x, float y, float altura, float largura )
@@ -35,6 +38,52 @@ void imprime_bloco(float x, float y, float altura, float largura )
 		glVertex2d(x, y + altura);
 		glEnd();
 }
+
+int ponto_invalido(float x, float y)
+{
+	return 0; // essa funcao existe para checar se o bloco gerado aleatoriamente esta em um lugar valido ou nao.
+}
+
+void gera_blocos_aleatorios(){
+	// iniciando o gerador de numeros aleatórios
+	srand(time(0));
+	
+	quantidade_de_blocos = 10;
+	float x,y;
+	for(int i = 0; i < quantidade_de_blocos; i++)
+	{	
+		do
+		{	
+			x = 1.0*rand()/RAND_MAX; // nuero entre 0 e 1 
+			y = 1.0*rand()/RAND_MAX; // nuero entre 0 e 1 
+			x = 2*x -1; // nuero entre -1 e 1 
+			y = 2*y -1;	// nuero entre -1 e 1
+
+		} while (ponto_invalido(x,y));
+
+		obistaculos[i][X] = x;
+		obistaculos[i][Y] = y;
+		obistaculos[i][ALTURA] = ALTURA_BLOCO;
+		obistaculos[i][LARGURA] = LARGURA_BLOCO;
+	}
+}
+
+
+void gera_blocos_faze_1(){	
+
+ 	quantidade_de_blocos = 2;
+
+	obistaculos[0][X] = -0.7;
+	obistaculos[0][Y] = -0.4;
+	obistaculos[0][ALTURA] = 0.7;
+	obistaculos[0][LARGURA] = 0.6;
+	
+	obistaculos[1][X] = 0.2;
+	obistaculos[1][Y] = -0.2;
+	obistaculos[1][ALTURA] = 0.7;
+	obistaculos[1][LARGURA] = 0.6;
+}
+
 
 //Desenha os obstaculos no mapa e a area final
 void mapa(void)
@@ -51,52 +100,33 @@ void mapa(void)
 	glColor3f(0.0f, 1.0f, 0.0f);
 	imprime_bloco(-1.0,0.8,0.2,0.2);
 
-
-	if (obstaculoX[0] == 2) {
-		float coord_inicialx[(NUMOBSTACULOS + 5)];
-		float coord_inicialy[(NUMOBSTACULOS + 5)];
-
-		coord_inicialx[0] = -1;
-		coord_inicialy[0] = 1;
-		coord_inicialx[1] = 1;
-		coord_inicialy[1] = -1;
-		//escolhe um numero aleatorio de obstaculos
-		aux1 = rand();
-		numeroObstaculos = ((aux1 % NUMOBSTACULOS) + 2 + MINOBSTACULOS);
-
-		//descobre pontos para o obstaculo, sempre deixando um espa�o entre eles e n�o fechando os pontos iniciais e finais
-		while (i < numeroObstaculos)
-		{
-			aux1 = rand();
-			aux2 = rand();
-			coord_inicialx[i] = ((aux1 % (200 - TAMOBSTACULO)) / 100.0) - 1;
-			coord_inicialy[i] = ((aux2 % (200 - TAMOBSTACULO)) / 100.0) - 1;
-			while (j < i)	//confere se h� espa�o entre os obstaculos
-			{
-				if (((coord_inicialx[i] >(coord_inicialx[j] + (TAMOBSTACULO / 100.0) + 0.15)) || (coord_inicialx[i] < (coord_inicialx[j] - 0.15))) && ((coord_inicialy[i] > (coord_inicialy[j] + (TAMOBSTACULO / 30.0) + 0.15)) || (coord_inicialy[i] < (coord_inicialy[j] - 0.15))))
-				{
-					obstaculoX[i] = coord_inicialx[i];
-					obstaculoY[i] = coord_inicialy[i];
-				}
-				else
-				{
-					obstaculoX[i] = coord_inicialx[i] + TAMOBSTACULO/100.0 + 0.1;
-					break;
-				}
-				j++;
-			}
-			i++;	//passo pro proximo ponto
-			j = 0;
-		}
-		obstaculoX[0] = 1;
-	}
-
 	glColor3f(1.0, 0.0, 0.0);
-	for (i=2 ; i < numeroObstaculos; i++)
+	for (i=0 ; i < quantidade_de_blocos; i++)
 	{
-		imprime_bloco(obstaculoX[i], obstaculoY[i], TAMOBSTACULO / 100.0, TAMOBSTACULO / 100.0);
+		imprime_bloco(obistaculos[i][X], obistaculos[i][Y], obistaculos[i][ALTURA], obistaculos[i][LARGURA]);
 	}
 }
+
+
+void init_game()
+{
+	
+	switch (FAZE)
+	{
+		case 0:
+			gera_blocos_aleatorios();
+			break;
+	
+		case 1:
+			gera_blocos_faze_1();
+			break;
+		
+		default:
+			printf("Faze escolida nao reconhecida");
+	}
+
+}
+
 
 //YASMIM
 
@@ -150,7 +180,7 @@ void display(void) {
 
 	mapa();	//adi��o: JO�O
 
-			//Define cor atual
+	//Define cor atual
 	glColor3f(1.0, 1.0, 1.0);
 
 	//Desenha pontos
@@ -176,11 +206,9 @@ void display(void) {
 
 int main(int argc, char** argv) {
 
-	srand(time(0));
-
-	obstaculoX[0] = 2;
-
 	glutInit(&argc, argv);
+
+	init_game();
 
 	//Modo do Display
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
