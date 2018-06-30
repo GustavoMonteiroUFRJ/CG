@@ -3,12 +3,17 @@ FLAGS= -lglut -lGLEW -lGL
 
 
 all : gustavo
+	./gustavo.out
+
+0: gustavo
+	./gustavo.out 0
+
+1: gustavo
+	./gustavo.out 1
 
 gustavo : Bezier_gustavo.cpp
 	g++ Bezier_gustavo.cpp -o gustavo.out $(FLAGS)
-	./gustavo.out
-
-
+	
 joao: Bezier_joao.cpp
 	g++ Bezier_joao.cpp -o joao.out $(FLAGS)
 	./joao.out

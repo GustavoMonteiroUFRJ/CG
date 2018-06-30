@@ -19,7 +19,7 @@ float obistaculos[200][4];
 #define ALTURA 2
 #define LARGURA 3
 
-int faze;
+int faze = 0; // armazena a faze do jogo
 
 
 #define LIMIT 1000
@@ -147,7 +147,7 @@ void bezier(int quantidade_de_pontos)
 
 void init_game(int num_faze)
 {
-	faze = num_faze;
+	faze = num_faze;	
 	switch (faze)
 	{
 		case 0:
@@ -159,7 +159,7 @@ void init_game(int num_faze)
 			break;
 		
 		default:
-			printf("Faze escolida nao reconhecida");
+			printf("Faze escolida nao reconhecida\n");
 	}
 
 }
@@ -254,7 +254,11 @@ int main(int argc, char** argv) {
 
 	glutInit(&argc, argv);
 
-	init_game(0);
+	if(argc > 1){
+		faze = atoi(argv[1]);
+	}
+
+	init_game(faze);
 
 	//Modo do Display
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
