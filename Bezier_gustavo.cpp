@@ -301,16 +301,71 @@ int colisao()
 	return 0;
 }
 
-int ponto_no_retangulo(float px, float py, float x, float y, float altura, float largura)
+void incere_ponto(float x, float y)
 {
-	no_intervalo(px,x,x+largura);
-	no_intervalo(py,y,y+altura);
+	if(quantidade_de_pontos == 0)
+	{
+		if(no_intervalo(x, x_inicial, x_inicial + largura_inicial) && 
+			no_intervalo(y, y_inicial, y_inicial + altura_inicial)){
+			// Dentro do campo inicial
+			// Adiciona o preimeiro ponto
+			pontos_de_controle[quantidade_de_pontos][X] = x;
+			pontos_de_controle[quantidade_de_pontos][Y] = y;
+		}
+		else return;
+	}
+	else if (quantidade_de_pontos == 1)
+	{
+		if(no_intervalo(x ,x_final ,x_final + largura_final) && 
+			no_intervalo(y,y_final,y_final + altura_final)){
+			// Dentro do campo final
+			// Adiciona o segundo ponto
+			pontos_de_controle[quantidade_de_pontos][X] = x;
+			pontos_de_controle[quantidade_de_pontos][Y] = y;
+		}
+		else return;
+	}
+	else
+	{
+		// Manter o segundo ponto smepre no ultimo lugar!
+		pontos_de_controle[quantidade_de_pontos][X] = pontos_de_controle[quantidade_de_pontos-1][X];
+		pontos_de_controle[quantidade_de_pontos][Y] = pontos_de_controle[quantidade_de_pontos-1][Y];
+		
+		// Adiciona o novo ponto
+		pontos_de_controle[quantidade_de_pontos-1][X] = x;
+		pontos_de_controle[quantidade_de_pontos-1][Y] = y;
+		
+	}
+	// Incrementa o contador
+	quantidade_de_pontos++;
 }
+
+void remove_ponto(float x, float y)
+{
+	if(quantidade_de_pontos > 0)
+	{
+		quantidade_de_pontos--;
+		if(quantidade_de_pontos >= 2)
+		{
+			pontos_de_controle[quantidade_de_pontos-1][X] = pontos_de_controle[quantidade_de_pontos][X];
+			pontos_de_controle[quantidade_de_pontos-1][Y] = pontos_de_controle[quantidade_de_pontos][Y];
+		}	
+	}
+	else
+	{
+		init_game(fase); // Efeito pratico apenas em blocos aleatórios
+	}
+}
+
 
 // Funcao que trata do evento do clik
 // Adiciona e remove pontos de controle
 void mouse(int button, int state, int x, int y) 
 {
+	// passando os vlaores x e y para os valores entre -1 e 1
+	float px = (2.0*x) / WINDOW_WIDTH - 1.0;
+	float py = 1.0 - (2.0*y) / WINDOW_HEIGHT;
+
 	// Adiciona pontos e curvas
 	// Jogador cria pontos clicando no botao esquerdo do mouse
 	if (quantidade_de_pontos < MAX_PONTOS - 1) 
@@ -318,43 +373,7 @@ void mouse(int button, int state, int x, int y)
 		// Criacao de pontos e curvas
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) 
 		{	
-			float px = (2.0*x) / WINDOW_WIDTH - 1.0;
-			float py = 1.0 - (2.0*y) / WINDOW_HEIGHT;
-			if(quantidade_de_pontos == 0)
-			{
-				if(no_intervalo(px ,x_inicial ,x_inicial + largura_inicial) && 
-					no_intervalo(py,y_inicial,y_inicial + altura_inicial)){
-					// Dentro do campo inicial
-					// Adiciona o preimeiro ponto
-					pontos_de_controle[quantidade_de_pontos][X] = px;
-					pontos_de_controle[quantidade_de_pontos][Y] = py;
-				}
-				else return;
-			}
-			else if (quantidade_de_pontos == 1)
-			{
-				if(no_intervalo(px ,x_final ,x_final + largura_final) && 
-					no_intervalo(py,y_final,y_final + altura_final)){
-					// Dentro do campo final
-					// Adiciona o segundo ponto
-					pontos_de_controle[quantidade_de_pontos][X] = px;
-					pontos_de_controle[quantidade_de_pontos][Y] = py;
-				}
-				else return;
-			}
-			else
-			{
-				// Manter o segundo ponto smepre no ultimo lugar!
-				pontos_de_controle[quantidade_de_pontos][X] = pontos_de_controle[quantidade_de_pontos-1][X];
-				pontos_de_controle[quantidade_de_pontos][Y] = pontos_de_controle[quantidade_de_pontos-1][Y];
-				
-				// Adiciona o novo ponto
-				pontos_de_controle[quantidade_de_pontos-1][X] = px;
-				pontos_de_controle[quantidade_de_pontos-1][Y] = py;
-				
-			}
-			// Incrementa o contador
-			quantidade_de_pontos++;
+			incere_ponto(px,py);
 			// Recalcula toda a curva 
 			bezier(quantidade_de_pontos);
 			// Atualiza a tela
@@ -364,22 +383,12 @@ void mouse(int button, int state, int x, int y)
 
 	// Remocao de pontos e curvas
 	// Jogador remove pontos clicanco no botao direito do mouse
-	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN ) {
-		
-		if(quantidade_de_pontos > 0)
-		{
-			quantidade_de_pontos--;
-			if(quantidade_de_pontos >= 2)
-			{
-				pontos_de_controle[quantidade_de_pontos-1][X] = pontos_de_controle[quantidade_de_pontos][X];
-				pontos_de_controle[quantidade_de_pontos-1][Y] = pontos_de_controle[quantidade_de_pontos][Y];
-			}		
-			bezier(quantidade_de_pontos);
-		}
-		else
-		{
-			init_game(fase); // Efeito pratico apenas em blocos aleatórios
-		}
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN )
+	{	
+		remove_ponto(px,py);
+		// Recalcula toda a curva 
+		bezier(quantidade_de_pontos);
+		// Atualiza a tela
 		glutPostRedisplay();
 	}
 
@@ -418,7 +427,6 @@ void display(void) {
 			printf("Parabens!!! %d pontos usados!\n", quantidade_de_pontos - 2);
 		}
 	}
-
 	//Exibe o conteudo do Frame Buffer
 	glFlush();
 	//Troca de buffer (duble buffer)
