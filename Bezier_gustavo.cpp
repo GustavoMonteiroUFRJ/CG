@@ -24,7 +24,6 @@
 #define largura_final 0.2
 
 
-
 float obistaculos[200][4];
 int quantidade_de_obistaculos = 20;
 // Grupos de defines para trabalhar com os obistaculos
@@ -340,6 +339,102 @@ void incere_ponto(float x, float y)
 	quantidade_de_pontos++;
 }
 
+float distancia_entre_pontos(float* p1, float* p2)
+{
+	float x1 = p1[X];
+	float y1 = p1[Y];
+	float x2 = p2[X];
+	float y2 = p2[Y];
+	return sqrt(pow(x1-x2,2)+pow(y1-y2,2));
+}
+
+void incere_ponto2(float x, float y)
+{
+	if(quantidade_de_pontos == 0)
+	{
+		if(no_intervalo(x, x_inicial, x_inicial + largura_inicial) && 
+			no_intervalo(y, y_inicial, y_inicial + altura_inicial)){
+			// Dentro do campo inicial
+			// Adiciona o preimeiro ponto
+			pontos_de_controle[quantidade_de_pontos][X] = x;
+			pontos_de_controle[quantidade_de_pontos][Y] = y;
+		}
+		else return;
+	}
+	else if (quantidade_de_pontos == 1)
+	{
+		if(no_intervalo(x ,x_final ,x_final + largura_final) && 
+			no_intervalo(y,y_final,y_final + altura_final)){
+			// Dentro do campo final
+			// Adiciona o segundo ponto
+			pontos_de_controle[quantidade_de_pontos][X] = x;
+			pontos_de_controle[quantidade_de_pontos][Y] = y;
+		}
+		else return;
+	}
+	else
+	{
+		// Manter o segundo ponto smepre no ultimo lugar!
+		pontos_de_controle[quantidade_de_pontos][X] = pontos_de_controle[quantidade_de_pontos-1][X];
+		pontos_de_controle[quantidade_de_pontos][Y] = pontos_de_controle[quantidade_de_pontos-1][Y];
+		
+		float p_limit[2];
+		p_limit[X]=-1.0;
+		p_limit[Y]=1.0;
+
+		float p_atual[2];
+		p_atual[X] = x;
+		p_atual[Y] = y;
+
+		int index_minimo = 1;
+		int index_maximo = quantidade_de_pontos-2;
+		float distancia_maxima = distancia_entre_pontos(p_limit, pontos_de_controle[0]);
+		float distancia_atual = distancia_entre_pontos(p_atual, pontos_de_controle[0]);
+
+		// primeiro chute do index
+		int index = index_minimo + index_maximo * distancia_atual / distancia_maxima;
+		if(distancia_atual > distancia_entre_pontos(pontos_de_controle[index], pontos_de_controle[0]))
+		{	
+			do{
+				index++;
+				if(index == quantidade_de_pontos-1) break;
+			}
+			while(distancia_atual > distancia_entre_pontos(pontos_de_controle[index], pontos_de_controle[0]));
+			
+		}
+		else if (index > 1)
+		{
+			while(distancia_atual < distancia_entre_pontos(pontos_de_controle[index-1], pontos_de_controle[0]))
+			{
+				index--;
+				if(index == 1) break;
+			}
+		}
+		if(index < quantidade_de_pontos-1)
+		{
+			for(int i = quantidade_de_pontos-1; i > index; i--)
+			{
+				pontos_de_controle[i][X] = pontos_de_controle[i-1][X];
+				pontos_de_controle[i][Y] = pontos_de_controle[i-1][Y];
+			}
+		}
+		// Adiciona o novo ponto
+		pontos_de_controle[index][X] = x;
+		pontos_de_controle[index][Y] = y;
+
+		
+		printf("[ ");
+		for(int i = 0; i < quantidade_de_pontos; i++)
+		{
+			printf("(%f,%f), ",pontos_de_controle[i][X],pontos_de_controle[i][Y]);
+		}
+		printf("(%f,%f) ]\n",pontos_de_controle[quantidade_de_pontos][X],pontos_de_controle[quantidade_de_pontos][Y]);
+		
+		
+	}
+	// Incrementa o contador
+	quantidade_de_pontos++;
+}
 void remove_ponto(float x, float y)
 {
 	if(quantidade_de_pontos > 0)
@@ -373,7 +468,8 @@ void mouse(int button, int state, int x, int y)
 		// Criacao de pontos e curvas
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) 
 		{	
-			incere_ponto(px,py);
+			// incere_ponto(px,py);
+			incere_ponto2(px,py);
 			// Recalcula toda a curva 
 			bezier(quantidade_de_pontos);
 			// Atualiza a tela
