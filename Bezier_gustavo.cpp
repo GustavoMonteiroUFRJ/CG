@@ -9,8 +9,8 @@
 #define NPOINTS 20 //numero de pontos adicionados pelo usuario
 #define DIVBEZIER 20  //numero de pontos na curva de bezier
 
-#define ALTURA_BLOCO 0.15
-#define LARGURA_BLOCO 0.15
+#define ALTURA_BLOCO 0.25
+#define LARGURA_BLOCO 0.25
 int quantidade_de_blocos;
 
 float obistaculos[200][4];
@@ -19,16 +19,14 @@ float obistaculos[200][4];
 #define ALTURA 2
 #define LARGURA 3
 
-#define FAZE 1
+int faze;
 
 
+#define LIMIT 1000
+int quantidade_de_pontos = 0;
 const float t = 1 / (float) DIVBEZIER;
-GLfloat points_x[NPOINTS]; //Vetor de coordenadas x dos pontos
-GLfloat points_y[NPOINTS]; //Vetor de coordenadas  dos pontos
-GLfloat curva_x[NPOINTS - 2][DIVBEZIER]; //Vetor de coordenadas x da curva
-GLfloat curva_y[NPOINTS - 2][DIVBEZIER]; //Vetor de coordenadas y da curva
-GLint point_idx = -1; //Contador de pontos
-GLint bezier_idx = -1; //Contador de curvas
+GLfloat pontos_de_controle[30][2];
+GLfloat curva[LIMIT+1][2];
 
 
 
@@ -110,10 +108,46 @@ void mapa(void)
 	}
 }
 
-
-void init_game(int faze)
+float combinacao(int n, int x)
 {
-	
+    if (x > n){
+        printf("Erro, conbinacao trocada");
+        exit(-1);
+    }
+	float resposta = 1.0;
+	if (x >  n/2)
+	{
+		x = n-x;
+	}
+	for(size_t i = 0; i < x; i++)
+	{
+		resposta *= 1.0*(n-i)/(x-i);
+	}
+	return resposta;
+}
+
+void bezier(int quantidade_de_pontos)
+{
+	int n = quantidade_de_pontos-1;
+	float passo = 1.0 / (LIMIT-1);
+	float t = 0.0;
+	for(size_t i = 0; i < LIMIT; i++)
+	{
+		
+		curva[i][X] = 0;
+		curva[i][Y] = 0;
+		for(size_t j = 0; j < quantidade_de_pontos; j++)
+		{	
+			curva[i][X] += combinacao(n,j)*pow(1-t,n-j)*pow(t,j)*pontos_de_controle[j][0];
+			curva[i][Y] += combinacao(n,j)*pow(1-t,n-j)*pow(t,j)*pontos_de_controle[j][1];
+		}
+		t += passo;
+	}
+}
+
+void init_game(int num_faze)
+{
+	faze = num_faze;
 	switch (faze)
 	{
 		case 0:
@@ -130,134 +164,61 @@ void init_game(int faze)
 
 }
 
-
 //YASMIM
-
-//Remove curvas de Bezier
-void removeBezier() {
-	for (int i = 0; i <= DIVBEZIER; i++) {
-		curva_x[bezier_idx][i] = 0.0;
-		curva_y[bezier_idx][i] = 0.0;
-	}
-}
-
-
-
-
-//Aplica Bezier Cubico
-void bezierQuad(GLfloat p1_x, GLfloat p2_x, GLfloat p3_x, GLfloat p1_y, GLfloat p2_y, GLfloat p3_y) {
-	for (int i = 0; i <= DIVBEZIER; i++) {
-		curva_x[bezier_idx][i] = (pow(1 - t*i, 2) * p1_x) +
-			(2 * t*i * (1 - t*i) * p2_x) + (pow(t*i, 2) * p3_x);
-		curva_y[bezier_idx][i] = (pow(1 - t * i, 2) * p1_y) +
-			(2 * t*i * (1 - t*i) * p2_y) + (pow(t*i, 2) * p3_y);
-	}
-}
-
 
 void mouse(int button, int state, int x, int y) {
 	//Adiciona pontos e curvas
 	//Jogador cria pontos clicando no botao esquerdo do mouse
-	if (point_idx < NPOINTS - 2) {
+	if (quantidade_de_pontos < NPOINTS - 1) 
+	{
 		//Criacao de pontos e curvas
-		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-			//Adiciona um ponto a lista
-			point_idx++;
-
-			//Pega coordenadas do ponto passado
-			points_x[point_idx] = (2.0*x) / WINDOW_WIDTH - 1.0;
-			points_y[point_idx] = 1.0 - (2.0*y) / WINDOW_HEIGHT;
-
-			//Existem mais de 4 pontos em tela
-			//Adiciona nova curva
-			if (point_idx > 3) {
-				bezierQuad((points_x[point_idx - 3] + points_x[point_idx - 2]) / 2, 
-					points_x[point_idx - 2], (points_x[point_idx - 2] + points_x[point_idx - 1]) / 2,
-					(points_y[point_idx - 3] + points_y[point_idx - 2]) / 2, points_y[point_idx - 2],
-					(points_y[point_idx - 2] + points_y[point_idx - 1]) / 2);
-
-				bezier_idx++;
-				bezierQuad((points_x[point_idx - 2] + points_x[point_idx - 1]) / 2,
-					points_x[point_idx - 1], points_x[point_idx],
-					(points_y[point_idx - 2] + points_y[point_idx - 1]) / 2,
-					points_y[point_idx - 1], points_y[point_idx]);
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) 
+		{	
+			if(quantidade_de_pontos < 2)
+			{
+				// Adiciona o preimeiro e o segundo ponto
+				pontos_de_controle[quantidade_de_pontos][X] = (2.0*x) / WINDOW_WIDTH - 1.0;
+				pontos_de_controle[quantidade_de_pontos][Y] = 1.0 - (2.0*y) / WINDOW_HEIGHT;
 			}
-			//Existem 4 pontos em tela
-			//Adiciona segunda curva
-			else if (point_idx == 3) {
-				bezierQuad(points_x[point_idx - 3], points_x[point_idx - 2],
-					(points_x[point_idx - 2] + points_x[point_idx - 1]) / 2,
-					points_y[point_idx - 3], points_y[point_idx - 2],
-					(points_y[point_idx - 2] + points_y[point_idx - 1]) / 2);
+			else
+			{
+				// manter o segundo ponto smepre no ultimo lugar!
+				pontos_de_controle[quantidade_de_pontos][X] = pontos_de_controle[quantidade_de_pontos-1][X];
+				pontos_de_controle[quantidade_de_pontos][Y] = pontos_de_controle[quantidade_de_pontos-1][Y];
+				
+				//adiciona o novo ponto
+				pontos_de_controle[quantidade_de_pontos-1][X] = (2.0*x) / WINDOW_WIDTH - 1.0;
+				pontos_de_controle[quantidade_de_pontos-1][Y] = 1.0 - (2.0*y) / WINDOW_HEIGHT;
+				
+			}
+			// incrementa o contador
+			quantidade_de_pontos++;
 
-				bezier_idx++;
-				bezierQuad((points_x[point_idx - 2] + points_x[point_idx - 1]) / 2,
-					points_x[point_idx - 1], points_x[point_idx], 
-					(points_y[point_idx - 2] + points_y[point_idx - 1]) / 2,
-					points_y[point_idx - 1], points_y[point_idx]);
-			}
-			//Existem 3 pontos em tela
-			//Cria primeira curva
-			else if (point_idx == 2) {
-				bezier_idx++;
-				bezierQuad(points_x[point_idx - 2], points_x[point_idx - 1], points_x[point_idx],
-					points_y[point_idx - 2], points_y[point_idx - 1], points_y[point_idx]);
-			}
+			bezier(quantidade_de_pontos);
 		}
 	}
-
 	//Remocao de pontos e curvas
 	//Jogador remove pontos clicanco no botao direito do mouse
-	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-		//Existem mais de duas curvas
-		//Remove ultima curva e ultimo ponto
-		if (point_idx > 3) {
-			removeBezier();
-			bezier_idx--;
-
-			points_x[point_idx] = 0.0;
-			points_y[point_idx] = 0.0;
-			point_idx--;
-
-			bezierQuad((points_x[point_idx - 2] + points_x[point_idx - 1]) / 2, points_x[point_idx - 1], 
-				points_x[point_idx], (points_y[point_idx - 2] + points_y[point_idx - 1]) / 2,
-				points_y[point_idx - 1], points_y[point_idx]);
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN ) {
+		
+		if(quantidade_de_pontos > 0)
+		{
+			quantidade_de_pontos--;
+			if(quantidade_de_pontos >= 2)
+			{
+				pontos_de_controle[quantidade_de_pontos-1][X] = pontos_de_controle[quantidade_de_pontos][X];
+				pontos_de_controle[quantidade_de_pontos-1][Y] = pontos_de_controle[quantidade_de_pontos][Y];
+			}		
+			bezier(quantidade_de_pontos);
 		}
-		//Existem duas curvas
-		//Remove ultima curva e ultimo ponto
-		else if (point_idx == 3) {
-			removeBezier();
-			bezier_idx--;
-
-			points_x[point_idx] = 0.0;
-			points_y[point_idx] = 0.0;
-			point_idx--;
-
-			bezierQuad(points_x[point_idx - 2], points_x[point_idx - 1], points_x[point_idx],
-				points_y[point_idx - 2], points_y[point_idx - 1], points_y[point_idx]);
-		}
-		//Existe apenas uma curva
-		//Remove curva e ultimo ponto
-		else if (point_idx == 2) { 
-			removeBezier();
-			bezier_idx--;
-
-			points_x[point_idx] = 0.0;
-			points_y[point_idx] = 0.0;
-			point_idx--;
-		}
-		//Nao existem curvas
-		//Remove o ultimo ponto
-		else if (point_idx > -1) { 
-			points_x[point_idx] = 0.0;
-			points_y[point_idx] = 0.0;
-			point_idx--;
+		else
+		{
+			init_game(faze);
 		}
 	}
 
 	glutPostRedisplay();
 }
-
 void display(void) {
 	//Indica a cor da tela
 	glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -271,18 +232,18 @@ void display(void) {
 	//Desenha pontos
 	glPointSize(4.0);
 	glBegin(GL_POINTS);
-	for (int i = 0; i <= point_idx; i++) {
-		glVertex2d(points_x[i], points_y[i]);
+	for (int i = 0; i < quantidade_de_pontos; i++) {
+		glVertex2d(pontos_de_controle[i][X], pontos_de_controle[i][Y]);
 	}
 	glEnd();
 
-	//Desenha retas (Curva de Bezier)
-	glBegin(GL_LINE_STRIP);
-	for (int i = 0; i <= bezier_idx; i++) 
-		for(int j = 0; j <= DIVBEZIER; j++)
-			glVertex2d(curva_x[i][j], curva_y[i][j]);
-	glEnd();
-
+	if(quantidade_de_pontos >= 2){
+		//Desenha retas (Curva de Bezier)
+		glBegin(GL_LINE_STRIP);
+		for (int i = 0; i < LIMIT; i++)
+			glVertex2d(curva[i][X], curva[i][Y]);
+		glEnd();
+	}
 	//Exibe o conteudo do Frame Buffer
 	glFlush();
 	//Troca de buffer (duble buffer)
@@ -293,7 +254,7 @@ int main(int argc, char** argv) {
 
 	glutInit(&argc, argv);
 
-	init_game(FAZE);
+	init_game(0);
 
 	//Modo do Display
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
