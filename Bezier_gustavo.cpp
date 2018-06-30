@@ -11,6 +11,20 @@
 #define ALTURA_BLOCO 0.25
 #define LARGURA_BLOCO 0.25
 
+// Informacoes do bloco inicial
+#define x_inicial 0.8
+#define y_inicial -1.0
+#define altura_inicial 0.2
+#define largura_inicial 0.2
+
+// Informacoes do bloco final
+#define x_final -1.0
+#define y_final 0.8
+#define altura_final 0.2
+#define largura_final 0.2
+
+
+
 float obistaculos[200][4];
 int quantidade_de_obistaculos = 20;
 // Grupos de defines para trabalhar com os obistaculos
@@ -22,7 +36,7 @@ int quantidade_de_obistaculos = 20;
 
 int fase = 0; // Armazena a fase do jogo
 
-#define LIMIT 300	
+#define LIMIT 5000	
 int quantidade_de_pontos = 0; 
 GLfloat pontos_de_controle[MAX_PONTOS+2][2];
 GLfloat curva[LIMIT+1][2]; 
@@ -42,15 +56,14 @@ int bloco_invalido(float x, float y, float altura, float largura)
 {
 	if(x + largura > 1) return 1; // Fora do cmapo 
 	if(y + altura > 1) return 1; // Fora do cmapo 
-	if(x < -0.8 && y + altura > 0.8) return 1; // Em cima do bloco final
-	if(x + largura > 0.8 && y < -0.8) return 1; // Em cima do bloco inicial
+	if(x < x_final + largura_final  && y + altura > y_final) return 1; // Em cima do bloco final
+	if(x + largura > x_inicial && y < y_inicial + altura_inicial) return 1; // Em cima do bloco inicial
 	return 0; // Bloco valido!
 }
 
 // Preenche o vetor "obstaculso[]" com blocos aleatorios.
 void gera_blocos_aleatorios()
-{
-	
+{	
 	// Iniciando o gerador de numeros aleatórios
 	srand(time(0));
 	
@@ -106,11 +119,11 @@ void mapa(void)
 {
 	// Aria inicial
 	glColor3f(0.0f, 0.0f, 1.0f);
-	imprime_bloco(0.8, -1.0, 0.2, 0.2);
+	imprime_bloco(x_inicial, y_inicial, altura_inicial, altura_inicial);
 
 	// Aria final
 	glColor3f(0.0f, 1.0f, 0.0f);
-	imprime_bloco(-1.0,0.8,0.2,0.2);
+	imprime_bloco(x_final, y_final, altura_final, altura_final);
 
 	// Blocos de obstaculos
 	glColor3f(1.0, 0.0, 0.0);
@@ -288,9 +301,16 @@ int colisao()
 	return 0;
 }
 
+int ponto_no_retangulo(float px, float py, float x, float y, float altura, float largura)
+{
+	no_intervalo(px,x,x+largura);
+	no_intervalo(py,y,y+altura);
+}
+
 // Funcao que trata do evento do clik
 // Adiciona e remove pontos de controle
-void mouse(int button, int state, int x, int y) {
+void mouse(int button, int state, int x, int y) 
+{
 	// Adiciona pontos e curvas
 	// Jogador cria pontos clicando no botao esquerdo do mouse
 	if (quantidade_de_pontos < MAX_PONTOS - 1) 
@@ -298,11 +318,29 @@ void mouse(int button, int state, int x, int y) {
 		// Criacao de pontos e curvas
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) 
 		{	
-			if(quantidade_de_pontos < 2)
+			float px = (2.0*x) / WINDOW_WIDTH - 1.0;
+			float py = 1.0 - (2.0*y) / WINDOW_HEIGHT;
+			if(quantidade_de_pontos == 0)
 			{
-				// Adiciona o preimeiro e o segundo ponto
-				pontos_de_controle[quantidade_de_pontos][X] = (2.0*x) / WINDOW_WIDTH - 1.0;
-				pontos_de_controle[quantidade_de_pontos][Y] = 1.0 - (2.0*y) / WINDOW_HEIGHT;
+				if(no_intervalo(px ,x_inicial ,x_inicial + largura_inicial) && 
+					no_intervalo(py,y_inicial,y_inicial + altura_inicial)){
+					// Dentro do campo inicial
+					// Adiciona o preimeiro ponto
+					pontos_de_controle[quantidade_de_pontos][X] = px;
+					pontos_de_controle[quantidade_de_pontos][Y] = py;
+				}
+				else return;
+			}
+			else if (quantidade_de_pontos == 1)
+			{
+				if(no_intervalo(px ,x_final ,x_final + largura_final) && 
+					no_intervalo(py,y_final,y_final + altura_final)){
+					// Dentro do campo final
+					// Adiciona o segundo ponto
+					pontos_de_controle[quantidade_de_pontos][X] = px;
+					pontos_de_controle[quantidade_de_pontos][Y] = py;
+				}
+				else return;
 			}
 			else
 			{
@@ -311,8 +349,8 @@ void mouse(int button, int state, int x, int y) {
 				pontos_de_controle[quantidade_de_pontos][Y] = pontos_de_controle[quantidade_de_pontos-1][Y];
 				
 				// Adiciona o novo ponto
-				pontos_de_controle[quantidade_de_pontos-1][X] = (2.0*x) / WINDOW_WIDTH - 1.0;
-				pontos_de_controle[quantidade_de_pontos-1][Y] = 1.0 - (2.0*y) / WINDOW_HEIGHT;
+				pontos_de_controle[quantidade_de_pontos-1][X] = px;
+				pontos_de_controle[quantidade_de_pontos-1][Y] = py;
 				
 			}
 			// Incrementa o contador
