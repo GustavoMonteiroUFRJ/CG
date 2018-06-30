@@ -6,7 +6,7 @@
 
 #define WINDOW_WIDTH 600
 #define WINDOW_HEIGHT 600
-#define MAX_PONTOS 20 //numero de pontos adicionados pelo usuario
+#define MAX_PONTOS 40 //numero de pontos adicionados pelo usuario
 
 #define ALTURA_BLOCO 0.25
 #define LARGURA_BLOCO 0.25
@@ -39,7 +39,10 @@ void imprime_bloco(float x, float y, float altura, float largura )
 
 int bloco_invalido(float x, float y, float altura, float largura)
 {
-
+	if(x + largura > 1) return 1;
+	if(y + altura > 1) return 1;
+	if(x < -0.8 && y + altura > 0.8) return 1;
+	if(x + largura > 0.8 && y < -0.8) return 1;
 	return 0; // essa funcao existe para checar se o bloco gerado aleatoriamente esta em um lugar valido ou nao.
 }
 
@@ -47,7 +50,7 @@ void gera_blocos_aleatorios(){
 	// iniciando o gerador de numeros aleatórios
 	srand(time(0));
 	
-	quantidade_de_obistaculos = 10;
+	quantidade_de_obistaculos = 20;
 	float x,y;
 	for(int i = 0; i < quantidade_de_obistaculos; i++)
 	{	
@@ -66,7 +69,6 @@ void gera_blocos_aleatorios(){
 		obistaculos[i][LARGURA] = LARGURA_BLOCO;
 	}
 }
-
 
 void gera_blocos_fase_1(){	
 
@@ -150,6 +152,7 @@ void bezier(int quantidade_de_pontos)
 
 void init_game(int num_fase)
 {
+	printf("New game! Faze %d\n",fase);
 	fase = num_fase;	
 	switch (fase)
 	{
@@ -297,6 +300,7 @@ void mouse(int button, int state, int x, int y) {
 			quantidade_de_pontos++;
 
 			bezier(quantidade_de_pontos);
+			glutPostRedisplay();
 		}
 	}
 	//Remocao de pontos e curvas
@@ -317,10 +321,11 @@ void mouse(int button, int state, int x, int y) {
 		{
 			init_game(fase); // efeito pratico apenas em blocos aleatórios
 		}
+		glutPostRedisplay();
 	}
 
-	glutPostRedisplay();
 }
+
 void display(void) {
 	//Indica a cor da tela
 	glClearColor(0.0, 0.0, 0.0, 0.0);
