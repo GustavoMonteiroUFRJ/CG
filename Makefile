@@ -11,6 +11,10 @@ all : gustavo
 1: gustavo
 	./gustavo.out 1
 
+2: gustavo
+	./gustavo.out 2
+
+	
 gustavo : Bezier_gustavo.cpp
 	g++ Bezier_gustavo.cpp -o gustavo.out $(FLAGS)
 	
