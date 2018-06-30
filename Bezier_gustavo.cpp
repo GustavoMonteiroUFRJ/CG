@@ -6,26 +6,26 @@
 
 #define WINDOW_WIDTH 600
 #define WINDOW_HEIGHT 600
-#define MAX_PONTOS 40 //numero de pontos adicionados pelo usuario
+#define MAX_PONTOS 40 // Numero de pontos adicionados pelo usuario
 
 #define ALTURA_BLOCO 0.25
 #define LARGURA_BLOCO 0.25
 
 float obistaculos[200][4];
-int quantidade_de_obistaculos = 0;
-// grupos de defines para trabalhar com os obistaculos
+int quantidade_de_obistaculos = 20;
+// Grupos de defines para trabalhar com os obistaculos
 #define X 0
 #define Y 1
 #define ALTURA 2
 #define LARGURA 3
 
 
-int fase = 0; // armazena a fase do jogo
+int fase = 0; // Armazena a fase do jogo
 
 #define LIMIT 300	
-int quantidade_de_pontos = 0;
+int quantidade_de_pontos = 0; 
 GLfloat pontos_de_controle[MAX_PONTOS+2][2];
-GLfloat curva[LIMIT+1][2];
+GLfloat curva[LIMIT+1][2]; 
 
 void imprime_bloco(float x, float y, float altura, float largura )
 {
@@ -37,29 +37,33 @@ void imprime_bloco(float x, float y, float altura, float largura )
 		glEnd();
 }
 
+// Verifica se os blocos adicionados alatoriamente estao em posicoes invalidas.
 int bloco_invalido(float x, float y, float altura, float largura)
 {
-	if(x + largura > 1) return 1;
-	if(y + altura > 1) return 1;
-	if(x < -0.8 && y + altura > 0.8) return 1;
-	if(x + largura > 0.8 && y < -0.8) return 1;
-	return 0; // essa funcao existe para checar se o bloco gerado aleatoriamente esta em um lugar valido ou nao.
+	if(x + largura > 1) return 1; // Fora do cmapo 
+	if(y + altura > 1) return 1; // Fora do cmapo 
+	if(x < -0.8 && y + altura > 0.8) return 1; // Em cima do bloco final
+	if(x + largura > 0.8 && y < -0.8) return 1; // Em cima do bloco inicial
+	return 0; // Bloco valido!
 }
 
-void gera_blocos_aleatorios(){
-	// iniciando o gerador de numeros aleatórios
+// Preenche o vetor "obstaculso[]" com blocos aleatorios.
+void gera_blocos_aleatorios()
+{
+	
+	// Iniciando o gerador de numeros aleatórios
 	srand(time(0));
 	
-	quantidade_de_obistaculos = 20;
+	// quantidade_de_obistaculos = 20; // Apenas nesse caso, sera inicializada pela main.
 	float x,y;
 	for(int i = 0; i < quantidade_de_obistaculos; i++)
 	{	
 		do
 		{	
-			x = 1.0*rand()/RAND_MAX; // nuero entre 0 e 1 
-			y = 1.0*rand()/RAND_MAX; // nuero entre 0 e 1 
-			x = 2*x -1; // nuero entre -1 e 1 
-			y = 2*y -1;	// nuero entre -1 e 1
+			x = 1.0*rand()/RAND_MAX; // Nuero entre 0 e 1 
+			y = 1.0*rand()/RAND_MAX; // Nuero entre 0 e 1 
+			x = 2*x -1; // Nuero entre -1 e 1 
+			y = 2*y -1;	// Nuero entre -1 e 1
 
 		} while (bloco_invalido(x,y,ALTURA_BLOCO,LARGURA_BLOCO));
 
@@ -70,8 +74,9 @@ void gera_blocos_aleatorios(){
 	}
 }
 
-void gera_blocos_fase_1(){	
-
+// Preenche o vetor "obstaculso[]" com blocos pre definidos.
+void gera_blocos_fase_1()
+{	
  	quantidade_de_obistaculos = 2;
 
 	obistaculos[0][X] = -0.7;
@@ -85,8 +90,9 @@ void gera_blocos_fase_1(){
 	obistaculos[1][LARGURA] = 0.6;
 }
 
-void gera_blocos_fase_2(){	
-
+// Preenche o vetor "obstaculso[]" com blocos pre definidos.
+void gera_blocos_fase_2()
+{	
  	quantidade_de_obistaculos = 1;
 
 	obistaculos[0][X] = -0.7;
@@ -95,17 +101,18 @@ void gera_blocos_fase_2(){
 	obistaculos[0][LARGURA] = 1.4;
 }
 
-//Desenha os obstaculos no mapa e a area final
+// Desenha os obstaculos no mapa e as area final e inicial 
 void mapa(void)
 {
-	// ponto inicial
+	// Aria inicial
 	glColor3f(0.0f, 0.0f, 1.0f);
 	imprime_bloco(0.8, -1.0, 0.2, 0.2);
 
-	// ponto final
+	// Aria final
 	glColor3f(0.0f, 1.0f, 0.0f);
 	imprime_bloco(-1.0,0.8,0.2,0.2);
 
+	// Blocos de obstaculos
 	glColor3f(1.0, 0.0, 0.0);
 	for (int i=0 ; i < quantidade_de_obistaculos; i++)
 	{
@@ -113,6 +120,7 @@ void mapa(void)
 	}
 }
 
+// Ferramenta matematica
 float combinacao(int n, int x)
 {
     if (x > n){
@@ -126,19 +134,24 @@ float combinacao(int n, int x)
 	}
 	for(size_t i = 0; i < x; i++)
 	{
+		/*
+		Obs: possui erro numerico
+		porem apenas para valores muito grandes, e o erro eh bem pequeno
+		para as grandezas da aplicao atual funciona muito bem
+		*/ 
 		resposta *= 1.0*(n-i)/(x-i);
 	}
 	return resposta;
 }
 
+// Curva de Bezier para N pontos de controle.
 void bezier(int quantidade_de_pontos)
 {
-	int n = quantidade_de_pontos-1;
+	int n = quantidade_de_pontos-1; // Questao de legibilidade
 	float passo = 1.0 / (LIMIT-1);
 	float t = 0.0;
 	for(size_t i = 0; i < LIMIT; i++)
 	{
-		
 		curva[i][X] = 0;
 		curva[i][Y] = 0;
 		for(size_t j = 0; j < quantidade_de_pontos; j++)
@@ -150,6 +163,7 @@ void bezier(int quantidade_de_pontos)
 	}
 }
 
+// Inicia o jogo ecolhendo a fase
 void init_game(int num_fase)
 {
 	printf("New game! Faze %d\n",fase);
@@ -163,33 +177,31 @@ void init_game(int num_fase)
 		case 1:
 			gera_blocos_fase_1();
 			break;
+
 		case 2:
 			gera_blocos_fase_2();
 			break;
 
 		default:
-			printf("fase escolida nao reconhecida\n");
+			printf("Fase escolida nao reconhecida!\n");
 	}
-
 }
 
-int no_intervalo(float p, float t1, float t2){
-    if (t1 > t2){
+// Ferramente matematica, cehga se p esta entre [t1 , t2]
+int no_intervalo(float p, float t1, float t2)
+{
+    if (t1 > t2){ // Manter t2 > t1
         float aux = t1;
         t1 = t2;
         t2 = aux;
     }
     if( p > t1 && p < t2)
-	{
-        return 1 ;
-	}
+        return 1;
     else
-	{
         return 0;
-	}
-
 }
 
+// Calcula colisao entre um segmento p1p2 e um segmento (x1,y)(x2,y)
 int colisao_x(float *p1, float *p2, float y, float x1, float x2)
 {
     int ret = 0;
@@ -206,6 +218,7 @@ int colisao_x(float *p1, float *p2, float y, float x1, float x2)
     return ret;
 }
 
+// Calcula colisao entre um segmento p1p2 e um segmento (x,y1)(x,y2)
 int colisao_y(float *p1, float *p2, float x, float y1, float y2)
 {
     int ret = 0;
@@ -214,31 +227,35 @@ int colisao_y(float *p1, float *p2, float x, float y1, float y2)
         float t = (x - p2[X]) / (p1[X] - p2[X]);
         float y_intercecao = p1[Y]*t + (1-t)*p2[Y];
 
-        if(no_intervalo(y_intercecao, y1, y2)){
+        if(no_intervalo(y_intercecao, y1, y2))
+		{
             ret = 1;
         }
     }
     return ret;
 }
 
+// Calcula colisao entre um segmento qualquer e um segmento perpendicular a um eixo
 int colisao_entre_segmentos(float *p1, float *p2, float* q1, float* q2){
 
-	int ret = -1; 
     if(q1[X] == q2[X])
     {
-        ret =  colisao_y(p1, p2, q1[X], q1[Y], q2[Y]) ;
+        return colisao_y(p1, p2, q1[X], q1[Y], q2[Y]);
     }
     else if(q1[Y] == q2[Y])
     {
-        ret = colisao_x(p1, p2, q1[Y], q1[X], q2[X]);
+        return colisao_x(p1, p2, q1[Y], q1[X], q2[X]);
     }
     else
     {
         printf("Bad colistion! Um dos segmentos não é perpendicular ao eixo\n");
         printf("Feture ainda não implemetada\n");
+		exit(-1);
     }
+	return -1;
 }
 
+// Calcula colisao entre a curva de bezire e os obistaculos
 int colisao()
 {
 	float p1[2], p2[2];
@@ -271,12 +288,14 @@ int colisao()
 	return 0;
 }
 
+// Funcao que trata do evento do clik
+// Adiciona e remove pontos de controle
 void mouse(int button, int state, int x, int y) {
-	//Adiciona pontos e curvas
-	//Jogador cria pontos clicando no botao esquerdo do mouse
+	// Adiciona pontos e curvas
+	// Jogador cria pontos clicando no botao esquerdo do mouse
 	if (quantidade_de_pontos < MAX_PONTOS - 1) 
 	{
-		//Criacao de pontos e curvas
+		// Criacao de pontos e curvas
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) 
 		{	
 			if(quantidade_de_pontos < 2)
@@ -287,24 +306,26 @@ void mouse(int button, int state, int x, int y) {
 			}
 			else
 			{
-				// manter o segundo ponto smepre no ultimo lugar!
+				// Manter o segundo ponto smepre no ultimo lugar!
 				pontos_de_controle[quantidade_de_pontos][X] = pontos_de_controle[quantidade_de_pontos-1][X];
 				pontos_de_controle[quantidade_de_pontos][Y] = pontos_de_controle[quantidade_de_pontos-1][Y];
 				
-				//adiciona o novo ponto
+				// Adiciona o novo ponto
 				pontos_de_controle[quantidade_de_pontos-1][X] = (2.0*x) / WINDOW_WIDTH - 1.0;
 				pontos_de_controle[quantidade_de_pontos-1][Y] = 1.0 - (2.0*y) / WINDOW_HEIGHT;
 				
 			}
-			// incrementa o contador
+			// Incrementa o contador
 			quantidade_de_pontos++;
-
+			// Recalcula toda a curva 
 			bezier(quantidade_de_pontos);
+			// Atualiza a tela
 			glutPostRedisplay();
 		}
 	}
-	//Remocao de pontos e curvas
-	//Jogador remove pontos clicanco no botao direito do mouse
+
+	// Remocao de pontos e curvas
+	// Jogador remove pontos clicanco no botao direito do mouse
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN ) {
 		
 		if(quantidade_de_pontos > 0)
@@ -319,24 +340,27 @@ void mouse(int button, int state, int x, int y) {
 		}
 		else
 		{
-			init_game(fase); // efeito pratico apenas em blocos aleatórios
+			init_game(fase); // Efeito pratico apenas em blocos aleatórios
 		}
 		glutPostRedisplay();
 	}
 
 }
 
+// Funcao que desenha na tela
 void display(void) {
-	//Indica a cor da tela
+	
+	// Indica a cor da tela
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// Desenha os blocos do mapa
 	mapa();
 
-	//Define cor atual
+	// Define cor atual
 	glColor3f(1.0, 1.0, 1.0);
 
-	//Desenha pontos
+	// Desenha pontos de controle
 	glPointSize(4.0);
 	glBegin(GL_POINTS);
 	for (int i = 0; i < quantidade_de_pontos; i++) {
@@ -344,8 +368,8 @@ void display(void) {
 	}
 	glEnd();
 
+	// Desenha a curva de Bezier)
 	if(quantidade_de_pontos >= 2){
-		//Desenha retas (Curva de Bezier)
 		glBegin(GL_LINE_STRIP);
 		for (int i = 0; i < LIMIT; i++)
 			glVertex2d(curva[i][X], curva[i][Y]);
@@ -353,7 +377,7 @@ void display(void) {
 		if(colisao()){
 			printf("Colidiu\n");
 		}else{
-			printf("Passou!!!\n");
+			printf("Parabens!!! %d pontos usados!\n", quantidade_de_pontos - 2);
 		}
 	}
 
@@ -370,6 +394,9 @@ int main(int argc, char** argv) {
 	if(argc > 1){
 		fase = atoi(argv[1]);
 	}
+	if(argc > 2){
+		quantidade_de_obistaculos = atoi(argv[2]);
+	}
 
 	init_game(fase);
 
@@ -381,8 +408,7 @@ int main(int argc, char** argv) {
 	glutInitWindowPosition((glutGet(GLUT_SCREEN_WIDTH) - WINDOW_WIDTH) / 2,
 		(glutGet(GLUT_SCREEN_HEIGHT) - WINDOW_HEIGHT) / 2);
 	//Cria uma janela
-	glutCreateWindow("Isso eh uma janela");
-
+	glutCreateWindow("Bezier Game");
 	//Inicia a funcao display()
 	glutDisplayFunc(display);
 	//Recebe comandos do mouse
