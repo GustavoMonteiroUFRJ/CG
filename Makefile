@@ -2,21 +2,21 @@
 FLAGS= -lglut -lGLEW -lGL
 
 
-all : gustavo
-	./gustavo.out
+all : bezier
+	./bezier.out
 
-0: gustavo
-	./gustavo.out 0
+0: bezier
+	./bezier.out 0
 
-1: gustavo
-	./gustavo.out 1
+1: bezier
+	./bezier.out 1
 
-2: gustavo
-	./gustavo.out 2
+2: bezier
+	./bezier.out 2
 
-	
-gustavo : Bezier_gustavo.cpp
-	g++ Bezier_gustavo.cpp -o gustavo.out $(FLAGS)
+
+bezier : Bezier.cpp
+	g++ Bezier.cpp -o bezier.out $(FLAGS)
 	
 joao: Bezier_joao.cpp
 	g++ Bezier_joao.cpp -o joao.out $(FLAGS)

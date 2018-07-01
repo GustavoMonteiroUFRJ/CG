@@ -34,6 +34,7 @@ int quantidade_de_obistaculos = 20;
 
 
 int fase = 0; // Armazena a fase do jogo
+int insere = 1; // flag usada para alterar a forma de insercao de pontos
 
 #define LIMIT 5000	
 int quantidade_de_pontos = 0; 
@@ -300,7 +301,8 @@ int colisao()
 	return 0;
 }
 
-void incere_ponto(float x, float y)
+// Insere por ordem de entrada do usuario
+void insere_ponto1(float x, float y)
 {
 	if(quantidade_de_pontos == 0)
 	{
@@ -339,6 +341,7 @@ void incere_ponto(float x, float y)
 	quantidade_de_pontos++;
 }
 
+// Calcula distandia entre pontos
 float distancia_entre_pontos(float* p1, float* p2)
 {
 	float x1 = p1[X];
@@ -348,7 +351,8 @@ float distancia_entre_pontos(float* p1, float* p2)
 	return sqrt(pow(x1-x2,2)+pow(y1-y2,2));
 }
 
-void incere_ponto2(float x, float y)
+// Isere por ordem de distancia do ponto inicial
+void insere_ponto2(float x, float y)
 {
 	if(quantidade_de_pontos == 0)
 	{
@@ -468,8 +472,8 @@ void mouse(int button, int state, int x, int y)
 		// Criacao de pontos e curvas
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) 
 		{	
-			// incere_ponto(px,py);
-			incere_ponto2(px,py);
+			if(insere == 1) insere_ponto1(px,py);
+			if(insere == 2) insere_ponto2(px,py);
 			// Recalcula toda a curva 
 			bezier(quantidade_de_pontos);
 			// Atualiza a tela
@@ -529,16 +533,38 @@ void display(void) {
 	glutSwapBuffers();
 }
 
+
+void trata_entrada(int argc, char** argv){
+
+	int fase_setada = 0;
+	for(int i = 1; i < argc; i++)
+	{
+		if(argv[i][0] == '-' && argv[i][1] == 'i')
+		{
+			i++;
+			insere = atoi(argv[i]);
+			printf("insere setado para %d\n", insere);
+		}
+		else if(fase_setada)
+		{
+			quantidade_de_obistaculos = atoi(argv[i]);
+			printf("quantidade_de_obistaculos setado para %d\n", quantidade_de_obistaculos);
+		}
+		else
+		{
+			fase = atoi(argv[i]);
+			fase_setada = 1;
+			printf("fase setado para %d\n", fase);		
+		}
+	}
+}
+
+
 int main(int argc, char** argv) {
 
 	glutInit(&argc, argv);
 
-	if(argc > 1){
-		fase = atoi(argv[1]);
-	}
-	if(argc > 2){
-		quantidade_de_obistaculos = atoi(argv[2]);
-	}
+	trata_entrada(argc, argv);
 
 	init_game(fase);
 
